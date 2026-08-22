@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f1117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Trade Check">
+<title>Trade Checklist — Forex Truth Finder</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon.svg">
+<style>
+:root {
+  --bg:#0f1117; --surface:#181b24; --surface2:#1e2130;
+  --border:#2a2f42; --border2:#363c54;
+  --text:#e8eaf0; --text2:#8890a8; --text3:#555e78;
+  --accent:#4f8ef7; --accent2:#1a3a7a;
+  --success:#2ecc71; --success2:#1a5c38;
+  --danger:#e74c3c; --danger2:#5c1a1a;
+  --warn:#f39c12; --warn2:#5c3a00;
+  --r:10px; --rs:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;font-size:14px;line-height:1.5;overflow-x:hidden}
+
+/* header */
+.hdr{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:9px 14px;display:flex;align-items:center;justify-content:space-between}
+.hdr-brand{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text3);text-transform:uppercase}
+.hdr-title{font-size:15px;font-weight:700;color:var(--text)}
+
+/* session bar */
+.sbar{padding:9px 12px;display:flex;gap:7px;align-items:center;border-bottom:1px solid var(--border);background:var(--surface)}
+.sbar input,.sbar select{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:var(--rs);padding:7px 9px;font-size:13px;font-weight:600;outline:none;flex:1;min-width:0}
+.sbar select{flex:0 0 auto;width:auto}
+
+/* hard stop banner */
+.hard-stop{margin:8px 10px 0;padding:10px 13px;background:var(--danger2);border:1px solid var(--danger);border-radius:var(--rs);font-size:13px;font-weight:600;color:var(--danger);display:none}
+.hard-stop.show{display:block}
+
+/* probe banner */
+.probe-banner{margin:6px 10px 0;padding:9px 13px;border-radius:var(--rs);font-size:12px;font-weight:600;display:none;align-items:center;gap:8px}
+.probe-banner.show{display:flex}
+.probe-banner.full{background:#1a3a7a;border:1px solid #4f8ef7;color:#b8d0ff}
+.probe-banner.reduced{background:var(--warn2);border:1px solid var(--warn);color:var(--warn)}
+
+/* progress */
+.prog-wrap{padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border)}
+.prog-track{height:3px;background:var(--border2);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s ease;width:0%}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px}
+
+/* sections */
+.sec{margin:10px 10px 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.sec-hdr{padding:11px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.sec-hdr:active{background:var(--surface2)}
+.sec-lbl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)}
+.sec-badge{display:flex;align-items:center;gap:6px;margin-left:auto}
+.badge{font-size:11px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)}
+.badge.done{background:var(--success2);color:var(--success)}
+.badge.blocked{background:var(--danger2);color:var(--danger)}
+.chev{font-size:12px;color:var(--text3);transition:transform .2s;display:inline-block}
+.chev.open{transform:rotate(180deg)}
+.sec-body{border-top:1px solid var(--border)}
+
+/* condition rows */
+.cond{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:7px}
+.cond:last-child{border-bottom:none}
+.cond-top{display:flex;align-items:flex-start;gap:10px}
+.cond-icon{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s}
+.cond-icon.bull{border-color:var(--success);background:var(--success2);color:var(--success)}
+.cond-icon.bear{border-color:var(--danger);background:var(--danger2);color:var(--danger)}
+.cond-icon.neut{border-color:var(--warn);background:var(--warn2);color:var(--warn)}
+.cond-icon.block{border-color:var(--danger);background:var(--danger2);color:var(--danger)}
+.cond-txt{flex:1;font-size:13px;color:var(--text);line-height:1.4}
+.cond-txt small{display:block;font-size:11px;color:var(--text3);margin-top:2px}
+
+/* answer buttons */
+.ans-grp{display:flex;gap:5px;flex-wrap:wrap}
+.abtn{border:1px solid var(--border2);background:var(--surface2);color:var(--text2);border-radius:20px;padding:4px 11px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.abtn:active{transform:scale(.96)}
+.abtn.sel-bull{background:var(--success2);border-color:var(--success);color:var(--success)}
+.abtn.sel-bear{background:var(--danger2);border-color:var(--danger);color:var(--danger)}
+.abtn.sel-neut{background:var(--warn2);border-color:var(--warn);color:var(--warn)}
+.abtn.sel-block{background:var(--danger2);border-color:var(--danger);color:var(--danger)}
+
+/* multi-select checkboxes for confluence */
+.multi-grp{display:flex;flex-direction:column;gap:5px}
+.mchk{display:flex;align-items:center;gap:9px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);cursor:pointer;transition:all .15s}
+.mchk.checked{background:var(--accent2);border-color:var(--accent)}
+.mchk-box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s}
+.mchk.checked .mchk-box{background:var(--accent);border-color:var(--accent);color:#fff}
+.mchk-lbl{font-size:12px;color:var(--text2);flex:1;line-height:1.3}
+.mchk.checked .mchk-lbl{color:var(--text)}
+
+/* auto-result pill */
+.auto-result{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-top:2px}
+.auto-result.bull{background:var(--success2);color:var(--success);border:1px solid var(--success)}
+.auto-result.bear{background:var(--danger2);color:var(--danger);border:1px solid var(--danger)}
+.auto-result.neut{background:var(--warn2);color:var(--warn);border:1px solid var(--warn)}
+.auto-result.block{background:var(--danger2);color:var(--danger);border:1px solid var(--danger)}
+.auto-result.pending{background:var(--surface2);color:var(--text3);border:1px solid var(--border2)}
+
+/* note */
+.note-inp{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--rs);padding:6px 10px;font-size:12px;width:100%;outline:none;resize:none;font-family:inherit}
+.note-inp::placeholder{color:var(--text3)}
+.note-inp:focus{border-color:var(--accent)}
+
+/* summary */
+.sum-sec{margin:10px 10px 16px;border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
+.sum-hdr{background:var(--surface);padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.sum-hdr h2{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3)}
+.out-pill{font-size:13px;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:.04em}
+.out-TAKE-TRADE{background:#1a5c38;color:#2ecc71}
+.out-TAKE-TRADE-REDUCED{background:#2a4a1a;color:#8fdd60}
+.out-WAIT{background:#4a3800;color:#f39c12}
+.out-NO-TRADE{background:#7a0f0f;color:#ff6b6b}
+.out-PENDING{background:var(--surface2);color:var(--text3)}
+.sum-body{background:var(--surface);border-top:1px solid var(--border);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.score-row{display:flex;align-items:center;gap:10px}
+.score-lbl{font-size:12px;color:var(--text2);width:56px;flex-shrink:0}
+.score-track{flex:1;height:6px;background:var(--border2);border-radius:3px;overflow:hidden;position:relative}
+.score-fill{position:absolute;left:0;top:0;height:100%;border-radius:3px;transition:width .4s ease}
+.score-fill.bull{background:var(--success)}
+.score-fill.bear{background:var(--danger)}
+.score-val{font-size:12px;font-weight:600;color:var(--text);width:32px;text-align:right;flex-shrink:0}
+.sum-items{display:flex;flex-direction:column;gap:4px}
+.sum-item{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text2);padding:3px 0}
+.sbadge{font-size:11px;font-weight:600;padding:1px 8px;border-radius:10px}
+.sbadge.b{background:var(--success2);color:var(--success)}
+.sbadge.s{background:var(--danger2);color:var(--danger)}
+.sbadge.n{background:var(--warn2);color:var(--warn)}
+.sbadge.p{background:var(--surface2);color:var(--text3)}
+.sum-note{font-size:13px;color:var(--text2);line-height:1.6;background:var(--surface2);border-radius:var(--rs);padding:10px 12px;border-left:3px solid var(--accent);white-space:pre-wrap;word-break:break-word}
+
+/* actions */
+.actions{padding:10px 14px 24px;display:flex;gap:8px}
+.btn{border:1px solid var(--border2);background:var(--surface2);color:var(--text2);border-radius:var(--rs);padding:9px 14px;font-size:13px;font-weight:500;cursor:pointer;flex:1;text-align:center;transition:all .15s;font-family:inherit}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent2);border-color:var(--accent);color:var(--accent);font-weight:600}
+.btn.danger{background:var(--danger2);border-color:var(--danger);color:var(--danger)}
+
+/* toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:9px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:999;transition:transform .25s ease;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* section divider label */
+.sec-divider{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:12px 14px 4px;opacity:.6}
+</style>
+</head>
+<body>
+
+<div id="installBanner" style="display:none;align-items:center;gap:10px;padding:10px 14px;background:#1a3a7a;border-bottom:1px solid #4f8ef7">
+  <span style="flex:1;font-size:13px;color:#b8d0ff">Add to home screen for the best experience</span>
+  <button onclick="doInstall()" style="background:#4f8ef7;border:none;color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Install</button>
+  <button onclick="document.getElementById('installBanner').style.display='none'" style="background:none;border:none;color:#4f8ef7;font-size:18px;cursor:pointer;padding:0 2px">×</button>
+</div>
+
+<div class="hdr">
+  <div><div class="hdr-brand">Forex Truth Finder</div><div class="hdr-title">Setup Checklist</div></div>
+  <button class="btn" style="flex:0;padding:7px 12px;font-size:12px" onclick="resetSession()">↺ Reset</button>
+</div>
+
+<div class="sbar">
+  <input type="text" id="pairInput" placeholder="Pair e.g. EURUSD" maxlength="12" oninput="saveSession();updateSummary()">
+  <select id="dirSelect" onchange="saveSession();updateSummary()">
+    <option value="">Dir</option>
+    <option value="LONG">Long</option>
+    <option value="SHORT">Short</option>
+  </select>
+  <select id="tfPairSelect" onchange="saveSession();updateSummary()">
+    <option value="">TF Pair</option>
+    <option value="H4→M15">H4→M15</option>
+    <option value="H1→M5">H1→M5</option>
+    <option value="Daily→H1">Daily→H1</option>
+    <option value="Weekly→H4">Weekly→H4</option>
+    <option value="M15→M1">M15→M1</option>
+  </select>
+</div>
+
+<div class="prog-wrap">
+  <div class="prog-lbl"><span id="progTxt">0 of 0 answered</span><span id="progPct">0%</span></div>
+  <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+</div>
+
+<div id="hardStop" class="hard-stop">⛔ HARD STOP — Gate failed. No trade.</div>
+<div id="probeBanner" class="probe-banner">
+  <span id="probeTxt"></span>
+</div>
+
+<div id="mainContainer"></div>
+
+<!-- SUMMARY -->
+<div class="sum-sec">
+  <div class="sum-hdr">
+    <h2>Setup verdict</h2>
+    <span class="out-pill out-PENDING" id="outlookPill">Pending</span>
+  </div>
+  <div class="sum-body">
+    <div class="score-row">
+      <span class="score-lbl">Setup</span>
+      <div class="score-track"><div class="score-fill bull" id="scoreSetup" style="width:0%"></div></div>
+      <span class="score-val" id="scoreSetupVal">0%</span>
+    </div>
+    <div class="sum-items" id="sumItems"></div>
+    <div class="sum-note" id="sumNote">Complete the checklist above to generate your setup verdict.</div>
+  </div>
+</div>
+
+<div class="actions">
+  <button class="btn primary" onclick="shareSession()">⬡ Share / Save</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════
+   PERMISSION TIMEFRAME MAP
+═══════════════════════════════ */
+const PERM_TF = {
+  'H4→M15':'Daily (D1)', 'H1→M5':'H4', 'Daily→H1':'Weekly (W1)',
+  'Weekly→H4':'Monthly (1M)', 'M15→M1':'H1'
+};
+
+/* ═══════════════════════════════
+   STATE
+═══════════════════════════════ */
+// Section 1: HTF Permission (Gate 1) — single answer
+// Section 2: Candle Language (Gate 2) — 6 element picks → auto-classify
+// Section 3: EMA Touch — single answer
+// Section 4: Setup Classification — auto from confluence multi-select
+// Section 5: Roadblock (half weight) — yes/no
+
+let st = {
+  g1: null,          // 'pass' | 'fail'
+  cl_decision: null, // 'Supportive'|'Neutral'|'Unclear'|'Contradictory'
+  ema_touch: null,   // 'valid'|'too-far'|'broken'
+  confluence: [],    // array of selected keys
+  roadblock: null,   // 'yes'|'no'
+};
+
+function saveState() { localStorage.setItem('ftf_st', JSON.stringify(st)); }
+function loadState() {
+  try { const s = localStorage.getItem('ftf_st'); if (s) st = JSON.parse(s); } catch(e){}
+}
+function saveSession() {
+  localStorage.setItem('ftf_pair', document.getElementById('pairInput').value);
+  localStorage.setItem('ftf_dir', document.getElementById('dirSelect').value);
+  localStorage.setItem('ftf_tfp', document.getElementById('tfPairSelect').value);
+}
+function loadSession() {
+  document.getElementById('pairInput').value = localStorage.getItem('ftf_pair')||'';
+  document.getElementById('dirSelect').value = localStorage.getItem('ftf_dir')||'';
+  document.getElementById('tfPairSelect').value = localStorage.getItem('ftf_tfp')||'';
+}
+
+/* ═══════════════════════════════
+   CANDLE LANGUAGE — from trader's own read
+═══════════════════════════════ */
+function classifyCandles() {
+  switch (st.cl_decision) {
+    case 'Supportive':     return { cls: 'bull',  label: 'Supportive',              probe: 'full' };
+    case 'Neutral':        return { cls: 'neut',  label: 'Neutral — Reduced Probe', probe: 'reduced' };
+    case 'Unclear':        return { cls: 'neut',  label: 'Unclear — Reduced Probe', probe: 'reduced' };
+    case 'Contradictory':  return { cls: 'block', label: 'Contradictory — No Trade',probe: 'none' };
+    default:               return { cls: 'pending', label: 'Pending',               probe: null };
+  }
+}
+
+/* ═══════════════════════════════
+   SETUP CLASSIFICATION AUTO
+═══════════════════════════════ */
+const CONFLUENCE_OPTIONS = [
+  { key: 'sr_flip_support', label: 'Previous resistance now acting as support' },
+  { key: 'sr_flip_resist',  label: 'Previous support now acting as resistance' },
+  { key: 'prev_hl_support', label: 'Previous Higher Low acting as support (uptrend)' },
+  { key: 'prev_lh_resist',  label: 'Previous Lower High acting as resistance (downtrend)' },
+  { key: 'sweep_swing',     label: 'Sweep of a previous swing high or low' },
+  { key: 'sweep_internal',  label: 'Sweep of internal swing created during pullback' },
+  { key: 'counter_struct',  label: 'Small counter-trend structure formed into EMA' },
+];
+
+function getSetupClass() {
+  if (st.ema_touch !== 'valid') return null;
+  if (st.confluence.length > 0) return 'A+';
+  return 'A';
+}
+
+/* ═══════════════════════════════
+   RENDER
+═══════════════════════════════ */
+function render() {
+  const container = document.getElementById('mainContainer');
+  container.innerHTML = '';
+  const tfp = document.getElementById('tfPairSelect').value;
+  const permTF = tfp ? PERM_TF[tfp] || '?' : '?';
+  const cl = classifyCandles();
+  const setupClass = getSetupClass();
+
+  // Determine hard stop
+  const g1Fail = st.g1 === 'fail';
+  const g2Fail = cl.probe === 'none';
+  const emaFail = st.ema_touch === 'too-far' || st.ema_touch === 'broken';
+  const hardStop = g1Fail || g2Fail;
+
+  document.getElementById('hardStop').classList.toggle('show', hardStop);
+  document.getElementById('hardStop').textContent =
+    g1Fail ? '⛔ GATE 1 FAILED — Price not on correct side of 21 EMA. No trade.'
+    : g2Fail ? '⛔ GATE 2 FAILED — Candle language is Contradictory. No trade.'
+    : '';
+
+  // Probe banner
+  const pb = document.getElementById('probeBanner');
+  const ptxt = document.getElementById('probeTxt');
+  if (!hardStop && cl.probe === 'full' && setupClass) {
+    pb.className = 'probe-banner show full';
+    ptxt.textContent = setupClass === 'A+' ? '✦ A+ Setup — Full Probe' : '◈ A Setup — Normal Probe';
+  } else if (!hardStop && cl.probe === 'reduced' && setupClass) {
+    pb.className = 'probe-banner show reduced';
+    ptxt.textContent = setupClass === 'A+' ? '▲ A+ Setup — Reduced to A Probe (Neutral candle language)' : '▲ A Setup — Reduced Probe (Neutral candle language)';
+  } else {
+    pb.className = 'probe-banner';
+  }
+
+  /* ── SECTION 1: HTF PERMISSION ── */
+  container.appendChild(makeSectionHeader('Gate 1 — HTF Permission', !!st.g1, g1Fail && 'blocked'));
+  const s1body = document.createElement('div'); s1body.className = 'sec-body';
+
+  const permHint = tfp ? `Permission TF: ${permTF} — price must be ${document.getElementById('dirSelect').value === 'SHORT' ? 'BELOW' : 'ABOVE'} the 21 EMA` : 'Select your TF pair above first';
+  const g1Label = st.g1 === 'pass' ? 'Pass — correct side ✓' : st.g1 === 'fail' ? 'Fail — wrong side ✗' : null;
+  s1body.appendChild(makeCondition(
+    'G1', 'Permission TF — 21 EMA Position', permHint,
+    ['Pass — correct side ✓', 'Fail — wrong side ✗'],
+    ['bull', 'block'],
+    g1Label,
+    (val) => { st.g1 = val === 'Pass — correct side ✓' ? 'pass' : 'fail'; saveState(); render(); updateSummary(); }
+  ));
+  container.lastChild.appendChild(s1body);
+
+  /* ── SECTION 2: CANDLE LANGUAGE ── */
+  container.appendChild(makeSectionHeader('Gate 2 — HTF Candle Language', !!st.cl_decision, g2Fail && 'blocked'));
+  const s2body = document.createElement('div'); s2body.className = 'sec-body';
+
+  s2body.appendChild(makeCondition('CL', 'Read the last 2–5 candles on the permission TF and classify',
+    'Supportive = behaviour consistent with your trade direction · Neutral = no clear story · Unclear = 5 candles still conflict · Contradictory = opposing side in control → hard stop',
+    ['Supportive','Neutral','Unclear','Contradictory'],
+    ['bull','neut','neut','block'], st.cl_decision,
+    (v) => { st.cl_decision = v; saveState(); render(); updateSummary(); }
+  ));
+  container.lastChild.appendChild(s2body);
+
+  /* ── SECTION 3: EMA TOUCH ── */
+  container.appendChild(makeSectionHeader('Section 3 — EMA Touch on Setup TF', !!st.ema_touch, false));
+  const s3body = document.createElement('div'); s3body.className = 'sec-body';
+  const emaTouchLabel = st.ema_touch === 'valid' ? 'Valid touch ✓' : st.ema_touch === 'too-far' ? 'Too far from EMA' : st.ema_touch === 'broken' ? 'EMA already broken' : null;
+  s3body.appendChild(makeCondition('ET', 'Price within 0.25 × ATR(14) of 21 EMA', 'Measure from the 21 EMA on the SETUP timeframe. A break is confirmed only when a candle opens AND closes fully on the other side without touching the EMA.',
+    ['Valid touch ✓','Too far from EMA','EMA already broken'],
+    ['bull','neut','block'], emaTouchLabel,
+    (v) => { st.ema_touch = v === 'Valid touch ✓' ? 'valid' : v === 'Too far from EMA' ? 'too-far' : 'broken'; saveState(); render(); updateSummary(); }
+  ));
+  container.lastChild.appendChild(s3body);
+
+  /* ── SECTION 4: SETUP CLASSIFICATION ── */
+  const aplus = setupClass === 'A+';
+  const aonly = setupClass === 'A';
+  container.appendChild(makeSectionHeader('Section 4 — Setup Classification', !!setupClass, false));
+  const s4body = document.createElement('div'); s4body.className = 'sec-body';
+
+  // Auto classification display
+  const sc = document.createElement('div');
+  sc.style.cssText = 'padding:10px 14px 8px;border-bottom:1px solid var(--border)';
+  sc.innerHTML = `<div style="font-size:11px;color:var(--text3);margin-bottom:6px">AUTO-CLASSIFICATION</div>`;
+  const scpill = document.createElement('div');
+  if (!setupClass) {
+    scpill.className = 'auto-result pending'; scpill.textContent = '○ Complete EMA touch first';
+  } else if (aplus) {
+    scpill.className = 'auto-result bull'; scpill.textContent = '✦ A+ Setup — EMA touch + confluence';
+  } else {
+    scpill.className = 'auto-result neut'; scpill.textContent = '◈ A Setup — EMA touch only, no confluence';
+  }
+  sc.appendChild(scpill);
+  s4body.appendChild(sc);
+
+  // Confluence multi-select
+  const cf = document.createElement('div');
+  cf.style.cssText = 'padding:10px 14px';
+  cf.innerHTML = '<div style="font-size:12px;color:var(--text2);margin-bottom:8px">Confluence present? Tick all that apply — any tick = A+</div>';
+  const mg = document.createElement('div'); mg.className = 'multi-grp';
+  CONFLUENCE_OPTIONS.forEach(opt => {
+    const row = document.createElement('div');
+    const checked = st.confluence.includes(opt.key);
+    row.className = 'mchk' + (checked ? ' checked' : '');
+    row.innerHTML = `<div class="mchk-box">${checked ? '✓' : ''}</div><span class="mchk-lbl">${opt.label}</span>`;
+    row.onclick = () => {
+      if (st.confluence.includes(opt.key)) { st.confluence = st.confluence.filter(k => k !== opt.key); }
+      else { st.confluence.push(opt.key); }
+      saveState(); render(); updateSummary();
+    };
+    mg.appendChild(row);
+  });
+  cf.appendChild(mg);
+  s4body.appendChild(cf);
+  container.lastChild.appendChild(s4body);
+
+  /* ── SECTION 5: ROADBLOCK (half weight) ── */
+  container.appendChild(makeSectionHeader('Roadblock Observation (½ weight)', !!st.roadblock, false));
+  const s5body = document.createElement('div'); s5body.className = 'sec-body';
+  const roadblockLabel = st.roadblock === 'yes' ? 'Yes — roadblock identified' : st.roadblock === 'no' ? 'No roadblock present' : null;
+  s5body.appendChild(makeCondition('RB', 'Untested HL/LH roadblock beyond standard target?',
+    'An isolated structural HL (for sells) or LH (for buys) from the previous trend that no confirmed swing has returned to. Extended target opportunity.',
+    ['Yes — roadblock identified','No roadblock present'],
+    ['bull','neut'], roadblockLabel,
+    (v) => { st.roadblock = v.startsWith('Yes') ? 'yes' : 'no'; saveState(); render(); updateSummary(); }
+  ));
+  container.lastChild.appendChild(s5body);
+
+  updateProgress();
+  updateSummary();
+}
+
+/* ═══════════════════════════════
+   HELPERS — DOM BUILDERS
+═══════════════════════════════ */
+function makeSectionHeader(label, done, blocked) {
+  const sec = document.createElement('div'); sec.className = 'sec';
+  const hdr = document.createElement('div'); hdr.className = 'sec-hdr';
+  hdr.innerHTML = `<span class="sec-lbl">${label}</span>
+    <div class="sec-badge">
+      <span class="badge ${done ? 'done' : ''} ${blocked ? 'blocked' : ''}">${done ? (blocked ? '✗' : '✓') : '—'}</span>
+    </div>`;
+  sec.appendChild(hdr);
+  return sec;
+}
+
+function makeCondition(id, label, hint, answers, biases, current, onChange) {
+  const bias = current ? biases[answers.indexOf(current)] : null;
+  const iconClass = bias === 'bull' ? 'bull' : bias === 'bear' ? 'bear' : bias === 'block' ? 'block' : bias === 'neut' ? 'neut' : '';
+  const iconChar = bias === 'bull' ? '▲' : bias === 'bear' || bias === 'block' ? '▼' : bias === 'neut' ? '─' : '';
+
+  const div = document.createElement('div'); div.className = 'cond';
+  div.innerHTML = `
+    <div class="cond-top">
+      <div class="cond-icon ${iconClass}">${iconChar}</div>
+      <div class="cond-txt">${label}<small>${hint}</small></div>
+    </div>
+    <div class="ans-grp" id="ag_${id}"></div>`;
+
+  const ag = div.querySelector(`#ag_${id}`);
+  answers.forEach((lbl, i) => {
+    const b = document.createElement('button'); b.className = 'abtn';
+    const bclass = biases[i] === 'bull' ? 'sel-bull' : biases[i] === 'bear' ? 'sel-bear' : biases[i] === 'block' ? 'sel-block' : 'sel-neut';
+    if (current === lbl) b.classList.add(bclass);
+    b.textContent = lbl;
+    b.onclick = () => { onChange(current === lbl ? null : lbl); };
+    ag.appendChild(b);
+  });
+  return div;
+}
+
+/* ═══════════════════════════════
+   PROGRESS
+═══════════════════════════════ */
+function updateProgress() {
+  // Count: g1, cl_decision, ema_touch, confluence (1), roadblock = 5 total
+  const total = 5;
+  const done = (st.g1 ? 1 : 0) + (st.cl_decision ? 1 : 0) + (st.ema_touch ? 1 : 0) + (st.ema_touch === 'valid' ? 1 : 0) + (st.roadblock ? 1 : 0);
+  const pct = Math.round(done / total * 100);
+  document.getElementById('progTxt').textContent = `${done} of ${total} answered`;
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('progFill').style.width = pct + '%';
+}
+
+/* ═══════════════════════════════
+   SUMMARY
+═══════════════════════════════ */
+function updateSummary() {
+  const pair = document.getElementById('pairInput').value.toUpperCase() || 'this pair';
+  const dir = document.getElementById('dirSelect').value;
+  const tfp = document.getElementById('tfPairSelect').value;
+  const cl = classifyCandles();
+  const setupClass = getSetupClass();
+  const g1ok = st.g1 === 'pass';
+  const g2ok = cl.probe !== 'none' && cl.probe !== null;
+  const emaOk = st.ema_touch === 'valid';
+  const hardStop = st.g1 === 'fail' || cl.probe === 'none';
+
+  // Score: each of 3 main gates worth 30% each, roadblock 10% half-weight
+  let score = 0;
+  if (g1ok) score += 30;
+  if (g2ok && cl.probe === 'full') score += 30;
+  else if (g2ok && cl.probe === 'reduced') score += 15;
+  if (emaOk) score += 30;
+  if (st.roadblock === 'yes') score += 5; // half weight = 5 of possible 10
+
+  document.getElementById('scoreSetup').style.width = score + '%';
+  document.getElementById('scoreSetupVal').textContent = score + '%';
+
+  // Verdict
+  const pill = document.getElementById('outlookPill');
+  pill.className = 'out-pill';
+  let verdict, vclass;
+
+  if (hardStop || !st.g1) {
+    verdict = 'No Trade'; vclass = 'NO-TRADE';
+    if (!st.g1) { verdict = 'Pending'; vclass = 'PENDING'; }
+  } else if (!emaOk) {
+    verdict = 'Wait'; vclass = 'WAIT';
+  } else if (cl.probe === 'full') {
+    verdict = setupClass === 'A+' ? 'Take Trade — A+' : 'Take Trade — A';
+    vclass = 'TAKE-TRADE';
+  } else if (cl.probe === 'reduced') {
+    verdict = setupClass === 'A+' ? 'Reduced Probe — A+' : 'Reduced Probe — A';
+    vclass = 'TAKE-TRADE-REDUCED';
+  } else {
+    verdict = 'Pending'; vclass = 'PENDING';
+  }
+  pill.classList.add('out-' + vclass);
+  pill.textContent = verdict;
+
+  // Summary items
+  const items = document.getElementById('sumItems');
+  items.innerHTML = '';
+  const addItem = (lbl, val, cls) => {
+    const d = document.createElement('div'); d.className = 'sum-item';
+    d.innerHTML = `<span>${lbl}</span><span class="sbadge ${cls}">${val}</span>`;
+    items.appendChild(d);
+  };
+  if (st.g1) addItem('Gate 1 — HTF Permission', st.g1 === 'pass' ? 'Pass' : 'FAIL', st.g1 === 'pass' ? 'b' : 's');
+  if (cl.cls !== 'pending') addItem('Gate 2 — Candle Language', cl.label.split('—')[0].trim(), cl.cls === 'bull' ? 'b' : cl.cls === 'neut' ? 'n' : 's');
+  if (st.ema_touch) addItem('EMA Touch', st.ema_touch === 'valid' ? 'Valid' : st.ema_touch === 'too-far' ? 'Too far' : 'Broken', st.ema_touch === 'valid' ? 'b' : 's');
+  if (setupClass) addItem('Setup Class', setupClass, setupClass === 'A+' ? 'b' : 'n');
+  if (st.confluence.length) addItem('Confluence count', st.confluence.length + ' type(s)', 'b');
+  if (st.roadblock) addItem('Roadblock (½ wt)', st.roadblock === 'yes' ? 'Identified' : 'None', st.roadblock === 'yes' ? 'b' : 'n');
+
+  // Narrative note
+  const noteEl = document.getElementById('sumNote');
+  if (!st.g1) { noteEl.textContent = 'Complete the checklist above to generate your setup verdict.'; return; }
+
+  const session = [pair, dir, tfp].filter(Boolean).join(' · ');
+  let note = session ? session + '\n\n' : '';
+
+  if (hardStop) {
+    note += st.g1 === 'fail'
+      ? `Gate 1 failed on ${pair}. Permission timeframe is not on the correct side of the 21 EMA. No trade — wait for alignment.`
+      : `Gate 2 failed on ${pair}. HTF candle language is Contradictory. The opposing side is in control. No trade regardless of lower timeframe setup.`;
+  } else if (!emaOk) {
+    note += `Gates 1 and 2 passed on ${pair}. Waiting for price to pull back to the 21 EMA on the setup timeframe${st.ema_touch === 'broken' ? ' — EMA has been broken, setup invalidated' : ''}.`;
+  } else {
+    const probeStr = cl.probe === 'full' ? 'full probe' : 'reduced probe (A size)';
+    const clStr = cl.probe === 'full' ? 'Supportive' : 'Neutral';
+    const rbStr = st.roadblock === 'yes' ? ' Roadblock level identified beyond standard target — consider extended target placement.' : '';
+    if (vclass === 'TAKE-TRADE' || vclass === 'TAKE-TRADE-REDUCED') {
+      note += `${setupClass} setup confirmed on ${pair}. Both gates passed. EMA touch valid. Candle language is ${clStr} — enter with ${probeStr}. Setup score: ${score}%.${rbStr}`;
+    } else {
+      note += `Setup score ${score}% on ${pair}. Conditions partially met — review remaining elements before committing.`;
+    }
+  }
+  noteEl.textContent = note;
+}
+
+/* ═══════════════════════════════
+   RESET / SHARE
+═══════════════════════════════ */
+function resetSession() {
+  if (!confirm('Clear all answers for this session?')) return;
+  st = { g1:null, cl_decision:null, ema_touch:null, confluence:[], roadblock:null };
+  document.getElementById('pairInput').value = '';
+  document.getElementById('dirSelect').value = '';
+  document.getElementById('tfPairSelect').value = '';
+  saveState(); saveSession(); render(); showToast('Session cleared');
+}
+function shareSession() {
+  const note = document.getElementById('sumNote').textContent;
+  if (navigator.share) { navigator.share({ title: 'Trade Setup', text: note }).catch(()=>{}); }
+  else { navigator.clipboard.writeText(note).then(() => showToast('Copied to clipboard')); }
+}
+
+/* ═══════════════════════════════
+   TOAST
+═══════════════════════════════ */
+let toastT;
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ═══════════════════════════════
+   PWA
+═══════════════════════════════ */
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; document.getElementById('installBanner').style.display = 'flex'; });
+window.addEventListener('appinstalled', () => { document.getElementById('installBanner').style.display = 'none'; installPrompt = null; });
+function doInstall() { if (!installPrompt) return; installPrompt.prompt(); installPrompt.userChoice.then(() => { installPrompt = null; }); }
+
+/* ═══════════════════════════════
+   BOOT
+═══════════════════════════════ */
+loadState(); loadSession(); render();
+</script>
+</body>
+</html>
